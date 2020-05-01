@@ -1,8 +1,9 @@
 import nodevisitor
-import simpletransform
-import cubicsuperpath
-import cspsubdiv
 from geometry import *
+import inkex
+from inkex import Transform
+from inkex import paths
+from inkex import bezier
 
 class NodeToPolylines(nodevisitor.NodeVisitor):
     def __init__(self, bbox):
@@ -40,11 +41,11 @@ class NodeToPolylines(nodevisitor.NodeVisitor):
         else:
             return
 
-        p = cubicsuperpath.parsePath(d)
+        p = paths.CubicSuperPath(paths.Path(d))
 
-        simpletransform.applyTransformToPath(transform, p)
+        p.transform(transform)
 
-        cspsubdiv.cspsubdiv(p, self.flatness)
+        bezier.cspsubdiv(p, self.flatness)
 
         for sub in p:
             polyline = Drawing.Polyline(self.drawing)
@@ -61,6 +62,6 @@ class NodeToPolylines(nodevisitor.NodeVisitor):
             if polyline.valid():
                 self.drawing.polylines.append(polyline)
 
-    def accept(self, node, transform = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]):
+    def accept(self, node, transform = Transform([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])):
         self.polylines = []
         super(NodeToPolylines, self).accept(node, transform)

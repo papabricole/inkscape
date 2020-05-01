@@ -1,39 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-  <_name>EggDuino</_name>
+  <name>EggDuino</name>
   <id>org.ekips.filter.eggduino</id>
-  <dependency type="executable" location="extensions">eggduino.py</dependency>
-  <dependency type="executable" location="extensions">inkex.py</dependency>
+  <dependency type="file" location="inx">eggduino.py</dependency>
 
-  <param name="laser-on-command" type="string" _gui-text="Laser ON Command:">M03 S255</param>
-	<param name="laser-off-command" type="string" _gui-text="Laser OFF Command:">M03 S0</param>
-	<param name="travel-speed" type="int" min="0" max="10000" _gui-text="Travel Speed (mm/min or in/min):">3000</param>
-	<param name="laser-speed" type="int" min="0" max="4000" _gui-text="Laser Speed (mm/min or in/min):">100</param>
-	<param name="power-delay" type="int" min="0" max="5000" _gui-text="Power-On Delay (ms):">500</param>
+  <param name="laser-on-command" type="string" gui-text="Laser ON Command:">M03 S255</param>
+	<param name="laser-off-command" type="string" gui-text="Laser OFF Command:">M03 S0</param>
+	<param name="travel-speed" type="int" min="0" max="10000" gui-text="Travel Speed (mm/min or in/min):">3000</param>
+	<param name="laser-speed" type="int" min="0" max="4000" gui-text="Laser Speed (mm/min or in/min):">100</param>
+	<param name="power-delay" type="int" min="0" max="5000" gui-text="Power-On Delay (ms):">500</param>
 
   <param name="tab" type="notebook">
-    <page name="filetab" _gui-text="File">
-      <param name="directory" type="string" _gui-text="Directory:"></param>
-	    <param name="filename" type="string" _gui-text="Filename:">output.gcode</param>
+    <page name="filetab" gui-text="File">
+      <param name="directory" type="string" gui-text="Directory:"></param>
+	    <param name="filename" type="string" gui-text="Filename:">output.gcode</param>
     </page>
     <page name="serialtab" _gui-text="Serial">
-      <param name="serialPort" type="string" _gui-text="Serial port:" _gui-description="The port of your serial connection, on Windows something like 'COM1', on Linux something like: '/dev/ttyUSB0' (Default: COM1)">/dev/cu.wchusbserial410</param>
-      <param name="serialBaudRate" type="enum" _gui-text="Serial baud rate:" _gui-description="The Baud rate of your serial connection (Default: 9600)">
-        <item value="115200">115200</item>
-        <item value="110">110</item>
-        <item value="300">300</item>
-        <item value="600">600</item>
-        <item value="1200">1200</item>
-        <item value="2400">2400</item>
-        <item value="4800">4800</item>
-        <item value="9600">9600</item>
-        <item value="14400">14400</item>
-        <item value="19200">19200</item>
-        <item value="28800">28800</item>
-        <item value="38400">38400</item>
-        <item value="56000">56000</item>
-        <item value="57600">57600</item>
-        <item value="115200">115200</item>
+      <param name="serialPort" type="string" gui-text="Serial port:" gui-description="The port of your serial connection, on Windows something like 'COM1', on Linux something like: '/dev/ttyUSB0' (Default: COM1)">/dev/cu.wchusbserial410</param>
+      <param name="serialBaudRate" type="optiongroup" appearance="combo" gui-text="Serial baud rate:" gui-description="The Baud rate of your serial connection (Default: 9600)">
+        <item translatable="no" value="115200">115200</item>
+        <item translatable="no" value="9600">9600</item>
+        <item translatable="no" value="14400">14400</item>
+        <item translatable="no" value="19200">19200</item>
+        <item translatable="no" value="28800">28800</item>
+        <item translatable="no" value="38400">38400</item>
+        <item translatable="no" value="56000">56000</item>
+        <item translatable="no" value="57600">57600</item>
+        <item translatable="no" value="115200">115200</item>
       </param>
     </page>
 	</param>
@@ -41,11 +34,11 @@
   <effect needs-live-preview="false" needs-document="no">
     <object-type>all</object-type>
     <effects-menu>
-       <submenu _name="Examples"/>
+       <submenu name="Export"/>
     </effects-menu>
   </effect>
   <script>
-    <command reldir="extensions" interpreter="python">eggduino.py</command>
+    <command location="inx" interpreter="python">eggduino.py</command>
   </script>
 </inkscape-extension>
 

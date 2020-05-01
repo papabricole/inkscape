@@ -3,6 +3,8 @@ import os
 import sys
 import copy
 import inkex
+from inkex import Transform
+from inkex.ports import Serial
 import nodeconverter
 from geometry import *
 import time
@@ -122,72 +124,59 @@ class Eggduino(inkex.Effect):
     def __init__(self):
         inkex.Effect.__init__(self)
 
-        self.OptionParser.add_option("--laser-on-command", action="store", type="string", dest="laser_on_command", default="M03 S255", help="Laser gcode start command")
-        self.OptionParser.add_option("--laser-off-command", action="store", type="string", dest="laser_off_command", default="M03 S0", help="Laser gcode end command")
-        self.OptionParser.add_option("--laser-speed", action="store", type="int", dest="laser_speed", default="100", help="Laser speed (mm/min)")
-        self.OptionParser.add_option("--travel-speed", action="store", type="string", dest="travel_speed", default="3000", help="Travel speed (mm/min)")
-        self.OptionParser.add_option("--power-delay", action="store", type="string", dest="power_delay", default="500", help="Laser power-on delay (ms)")
+        self.arg_parser.add_argument('--laser-on-command', default='M03 S255', help='Laser gcode start command')
+        self.arg_parser.add_argument('--laser-off-command', default="M03 S0", help="Laser gcode end command")
+        self.arg_parser.add_argument('--laser-speed', type=int, default="100", help="Laser speed (mm/min)")
+        self.arg_parser.add_argument('--travel-speed', type=int, default="3000", help="Travel speed (mm/min)")
+        self.arg_parser.add_argument('--power-delay', type=int, default="500", help="Laser power-on delay (ms)")
 
-        self.OptionParser.add_option("--tab", action="store", type="string", dest="tab")
-        self.OptionParser.add_option("--directory", action="store", type="string", dest="directory", default="", help="Output directory")
-        self.OptionParser.add_option("--filename", action="store", type="string", dest="file", default="output.gcode", help="File name")
-        self.OptionParser.add_option('--serialPort', action='store', type='string',  dest='serialPort', default='/dev/cu.wchusbserial410',  help='Serial port')
-        self.OptionParser.add_option('--serialBaudRate',  action='store', type='string',  dest='serialBaudRate',  default='115200',  help='Serial Baud rate')
+        self.arg_parser.add_argument('--tab')
+        self.arg_parser.add_argument('--directory', default="", help="Output directory")
+        self.arg_parser.add_argument('--filename', default="output.gcode", help="File name")
+        self.arg_parser.add_argument('--serialPort', default='/dev/cu.wchusbserial410',  help='Serial port')
+        self.arg_parser.add_argument('--serialBaudRate',  default='115200',  help='Serial Baud rate')
      
     def effect(self):
-        w = self.unittouu(self.getDocumentWidth())
-        h = self.unittouu(self.getDocumentHeight())
-        s = 1 / self.unittouu('1mm')
+        w = self.svg.width
+        h = self.svg.height
+        s = 1 / self.svg.unittouu('1mm')
         w = w * s
         h = h * s
 
-        #print >>sys.stderr, "w:"+str(w)+" h:"+str(h)+" s:"+str(s)
+        #print(f"w: {w} h: {h} s: {s}", file=sys.stderr)
         bbox=Rect()
         bbox.setBounds(Vec2(0,0), Vec2(w,h))
         converter=nodeconverter.NodeToPolylines(bbox)
-        converter.accept(self.document.getroot(), [[s, 0.0, 0.0], [0.0, -s, h]])
+        converter.accept(self.document.getroot(), Transform([[s, 0.0, 0.0], [0.0, -s, h]]))
         planner=Planner()
         planner.optimize(converter.drawing)
         gcode=drawing_to_gcode(converter.drawing, self.options)
 
-        if self.options.tab == '"filetab"':
-            filename=os.path.join(os.path.abspath(os.path.expanduser(self.options.directory)), os.path.splitext(self.options.file)[0]+'.gcode')
+        if self.options.tab == 'filetab':
+            filename=os.path.join(os.path.abspath(os.path.expanduser(self.options.directory)), os.path.splitext(self.options.filename)[0]+'.gcode')
             with open(filename, 'w') as f:
                 f.write('\n'.join(gcode))
-        elif self.options.tab == '"serialtab"':
-            # gracefully exit script when pySerial is missing
-            try:
-                import serial
-            except ImportError, e:
-                inkex.errormsg(_("pySerial is not installed. Please follow these steps:")
-                    + "\n\n" + _("1. Download and extract (unzip) this file to your local harddisk:")
-                    + "\n"   +   "   https://pypi.python.org/packages/source/p/pyserial/pyserial-2.7.tar.gz"
-                    + "\n"   + _("2. Copy the \"serial\" folder (Can be found inside the just extracted folder)")
-                    + "\n"   + _("   into the following Inkscape folder: C:\\[Program files]\\inkscape\\python\\Lib\\")
-                    + "\n"   + _("3. Close and restart Inkscape."))
-                return
-
+        elif self.options.tab == 'serialtab':
             # Open serial port
             try:
-                s = serial.Serial(self.options.serialPort, self.options.serialBaudRate, timeout=None)
+                serial = Serial(self.options.serialPort, self.options.serialBaudRate, timeout=None)
 
                 # Wake up grbl
-                s.write("\r\n\r\n")
+                serial.write("\r\n\r\n")
                 time.sleep(2)   # Wait for grbl to initialize
-                s.flushInput()  # Flush startup text in serial input
+                serial.flushInput()  # Flush startup text in serial input
 
                 # Stream g-code
                 for line in gcode:
-                	s.write(line + '\n') # Send g-code block
-                	grbl_out = s.readline() # Wait for response with carriage return
+                	serial.write(line + '\n') # Send g-code block
+                	grbl_out = serial.readline() # Wait for response with carriage return
                 time.sleep(2)
                 # Close serial port
-                s.close()
+                serial.close()
             except (OSError, serial.SerialException):
                 inkex.errormsg(_("Problem connecting to serial device."))
 
 
 
 if __name__ == '__main__':
-    effect = Eggduino()
-    effect.affect()
+    Eggduino().run()

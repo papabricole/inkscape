@@ -1,5 +1,5 @@
-import simpletransform
-import simplestyle
+import inkex
+from inkex import Transform
 
 class NodeVisitor(object):
     """Depth first traversal"""
@@ -7,10 +7,10 @@ class NodeVisitor(object):
     def visit_node(self, node, transform):
         pass
 
-    def accept(self, node, transform = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]):
+    def accept(self, node, transform = Transform([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])):
         def visible(node):
             """Return True if the node is visible."""
-            style = simplestyle.parseStyle(node.get('style') or "")
+            style = inkex.Style.parse_str(node.get('style') or "")
             if 'display' in style and style['display'] == 'none':
                 return False
             return True
@@ -19,7 +19,7 @@ class NodeVisitor(object):
             if not visible(node):
                 return
 
-            transform = simpletransform.composeTransform(transform, simpletransform.parseTransform(node.get('transform')))
+            transform *= node.transform
 
             # special case for clones
             if node.tag == '{http://www.w3.org/2000/svg}use':
