@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+
+!eggduino.*
+!geometry.py
+!nodeconverter.py
+!nodevisitor.py
+
